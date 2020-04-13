@@ -3,8 +3,7 @@ Reads magic bands and plays sounds and lights up leds, just like the real thing.
 
 # Install
 
-* See youtube video TBD
-
+* See youtube video https://youtu.be/HJ8CTLgmcSk 
 * Install on Raspbian /home/pi
 * sudo sh install.sh
 * vi magicband.py. and edit the led counts for your build
