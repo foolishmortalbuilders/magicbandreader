@@ -5,7 +5,7 @@ import binascii
 import logging
 import hashlib
 import struct
-import ndef
+#import ndef
 import hmac
 import cli
 import sys
@@ -18,16 +18,15 @@ import time
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
-# print band ids when read
-print_band_id = True
+# print band ids when read  set to True to see band ids on command line
+print_band_id =  False
 
-# Reverse the circle lights
+# Reverse the circle lights direction
 reverse_circle = True
 
 # The number of NeoPixels
 ring_pixels = 50 
 mickey_pixels = 40 
-
 
 COLOR_GREEN = (255,0,0) 
 COLOR_RED   = (0,255,0)
@@ -40,19 +39,16 @@ COLOR_PURPLE = (0,153,153)
 #
 sounds = { 'DEFAULT' : { 'color_ring' : COLOR_GREEN,
                          'color_mouse': COLOR_GREEN,
-                         'ring_sound' : '',
                          'sound' : 'magicband_fastpass.mp3'},
 
            # fastpass sound
-           '144d63b27c5c80': { 'color_ring' : COLOR_GREEN,
+           '044d63b27c5c80': { 'color_ring' : COLOR_GREEN,
                                'color_mouse': COLOR_GREEN,
-                               'ring_sound' : '',
                                'sound' : 'magicband_fastpass.mp3'},
          
            # dvc welcome home
            '044d63b27c5c80': { 'color_ring' : COLOR_PURPLE,
                                'color_mouse': COLOR_PURPLE,
-                               'ring_sound' : 'ring_sound.wav',
                                'sound' : 'justhome.wav'}
 }
 
@@ -71,8 +67,11 @@ log = logging.getLogger('main')
 
 log.setLevel(logging.CRITICAL)
 
-pygame.init()
+# Pre init helps to get rid of sound lag
+pygame.mixer.pre_init(44100, -16, 1, 512 )
 pygame.mixer.init()
+pygame.init()
+
 class MagicBand(cli.CommandLineInterface):
     def __init__(self):
         self.RING_LIGHT_SIZE = 4
@@ -80,17 +79,7 @@ class MagicBand(cli.CommandLineInterface):
         self.ring_pixels = ring_pixels
         self.pixels = neopixel.NeoPixel(pixel_pin, self.total_pixels, brightness=1.0, auto_write=False, pixel_order=neopixel.RGB)
         self.rdwr_commands = { }
-        self.do_lights_on(COLOR_WHITE)
-        time.sleep(.5)
-        self.do_lights_off()
-        time.sleep(.5)
-        self.do_lights_on(COLOR_WHITE)
-        time.sleep(.5)
-        self.do_lights_off()
-        time.sleep(.5)
-        self.do_lights_on(COLOR_WHITE)
-        time.sleep(.5)
-        self.do_lights_off()
+        self.playStartupSequence() 
         parser = ArgumentParser(
                 formatter_class=argparse.RawDescriptionHelpFormatter,
                 description="")
@@ -99,11 +88,23 @@ class MagicBand(cli.CommandLineInterface):
     def on_rdwr_startup(self, targets):
         return targets
 
-    # play sound
-    def playSound(self, fname):
+    # play startup sequence
+    def playStartupSequence(self):
+        for x in range(0,3):
+            self.do_lights_on(COLOR_WHITE)
+            time.sleep(.5)
+            self.do_lights_off()
+            time.sleep(.5)
+
+    # Preload sound
+    def loadSound(self, fname):
         if fname == '':
-            return 
+            return False
         pygame.mixer.music.load(fname)
+        return True
+
+    # play sound
+    def playSound(self):
         pygame.mixer.music.play()
      
 
@@ -119,12 +120,13 @@ class MagicBand(cli.CommandLineInterface):
         if print_band_id == True:
             print("MagicBandId = " + bandid)
         soundsAndColors = self.lookupBand(bandid)
-        self.playSound(soundsAndColors.get('ring_sound'))
+        soundFound = self.loadSound(soundsAndColors.get('sound'))
         self.do_lights_circle(soundsAndColors.get('color_ring'), reverse_circle)
-        self.playSound(soundsAndColors.get('sound')) 
+        if soundFound == True:
+            self.playSound() 
         self.do_lights_on_fade(soundsAndColors.get('color_mouse'))
-        time.sleep(3)
-        self.do_lights_off() 
+        time.sleep(1.5)
+        self.do_lights_off_fade() 
         self.pixels.brightness = 1.0
         return True
 
@@ -142,7 +144,7 @@ class MagicBand(cli.CommandLineInterface):
                         pixelNum = self.ring_pixels- (pixelNum - 1)
                     self.pixels[pixelNum] = color
             if (i > size) :
-                off = (i-size)-1
+                off = (i-size)
                 if reverse == True:
                     off = self.ring_pixels- (off - 1)
                 self.pixels[off] = 0
@@ -150,8 +152,8 @@ class MagicBand(cli.CommandLineInterface):
             time.sleep(wait)
 
     def do_lights_circle(self,color, reverse):
+        #self.color_chase(color,.01, reverse)
         self.color_chase(color,.01, reverse)
-        self.color_chase(color,.00, reverse)
         self.color_chase(color,.001, reverse)
         self.color_chase(color,.0001, reverse)
         self.color_chase(color,.0001, reverse)
@@ -171,6 +173,14 @@ class MagicBand(cli.CommandLineInterface):
             self.pixels.show()
             time.sleep(.001)
 
+    def do_lights_off_fade(self):
+        j = 1.01
+        for x in range(100):
+            j = j - .01
+            self.pixels.brightness = j
+            self.pixels.show()
+            time.sleep(.0005)
+        self.do_lights_off()
 
     def do_lights_off(self):
         for i in range(self.total_pixels):
