@@ -14,12 +14,15 @@ import time
 import board
 import neopixel
 import time
+import os.path
+from os import path
+import random 
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
 # print band ids when read  set to True to see band ids on command line
-print_band_id =  False
+print_band_id = False
 
 # Reverse the circle lights direction
 reverse_circle = True
@@ -34,21 +37,33 @@ COLOR_BLUE  = (0,0,255)
 COLOR_WHITE = (255,255,255)
 COLOR_PURPLE = (0,153,153)
 
-# Sounds and colors 
-# You must always define a 'DEFAULT' value
+# Sequence Definitions
 #
-sounds = { 'DEFAULT' : { 'color_ring' : COLOR_GREEN,
-                         'color_mouse': COLOR_GREEN,
-                         'sound' : 'magicband_fastpass.mp3'},
+sequences = { 
+          'any1' : { 'color_ring' : COLOR_GREEN,
+                    'color_mouse': COLOR_GREEN,
+                    'spin_sound' : '',
+                    'hold_seconds': 1.5,
+                    'sound' : 'magicband_fastpass.mp3'},
+
+          'any2' : { 'color_ring' : COLOR_BLUE,
+                    'color_mouse': COLOR_BLUE,
+                    'spin_sound' : 'ring_sound.wav',
+                    'hold_seconds': 1.5,
+                    'sound' : 'magicband_fastpass.mp3'},
 
            # fastpass sound
            '044d63b27c5c80': { 'color_ring' : COLOR_GREEN,
                                'color_mouse': COLOR_GREEN,
+                               'spin_sound' :'',
+                               'hold_seconds': 1.5,
                                'sound' : 'magicband_fastpass.mp3'},
          
            # dvc welcome home
            '044d63b27c5c80': { 'color_ring' : COLOR_PURPLE,
                                'color_mouse': COLOR_PURPLE,
+                               'spin_sound' : 'ring_sound.wav',
+                               'hold_seconds': 1.5,
                                'sound' : 'justhome.wav'}
 }
 
@@ -100,32 +115,52 @@ class MagicBand(cli.CommandLineInterface):
     def loadSound(self, fname):
         if fname == '':
             return False
-        pygame.mixer.music.load(fname)
+        if not path.exists(fname):
+            print("Missing sound file :" + fname)
+            return False
         return True
 
     # play sound
-    def playSound(self):
+    def playSound(self, fname):
+        pygame.mixer.music.load(fname)
         pygame.mixer.music.play()
      
 
-    # Returns bandid values if that bandid exists, otherwise returns DEFAULT 
+    # Returns bandid values if that bandid exists, otherwise returns random 'any*'  
     def lookupBand(self, bandid):
-        if bandid in sounds:
-            return sounds.get(bandid)
-        return sounds.get('DEFAULT') 
+        if bandid in sequences:
+            return sequences.get(bandid)
+
+        # bandid not found, return a random sound that begins with 'any'
+        lst = [] 
+        for key,ele in sequences.items():
+            if key.startswith('any'):
+                lst.append(ele)
+        randomsound = random.choice(lst)
+        return randomsound 
 
     def on_rdwr_connect(self, tag):
         bandid = str(binascii.hexlify(tag.identifier),"utf-8") 
-        log.info("MagicBandID = {0}",bandid)
         if print_band_id == True:
             print("MagicBandId = " + bandid)
-        soundsAndColors = self.lookupBand(bandid)
-        soundFound = self.loadSound(soundsAndColors.get('sound'))
-        self.do_lights_circle(soundsAndColors.get('color_ring'), reverse_circle)
+        sequence = self.lookupBand(bandid)
+        self.playSequence(sequence)
+
+
+    def playSequence(self, sequence):
+        ringSoundFound = self.loadSound(sequence.get('spin_sound')) 
+        soundFound = self.loadSound(sequence.get('sound'))
+        if ringSoundFound == True:
+            self.playSound(sequence.get('spin_sound'))
+
+        self.do_lights_circle(sequence.get('color_ring'), reverse_circle)
+
         if soundFound == True:
-            self.playSound() 
-        self.do_lights_on_fade(soundsAndColors.get('color_mouse'))
-        time.sleep(1.5)
+            self.playSound(sequence.get('sound')) 
+  
+        # All lights on
+        self.do_lights_on_fade(sequence.get('color_mouse'))
+        time.sleep(sequence.get('hold_seconds'))
         self.do_lights_off_fade() 
         self.pixels.brightness = 1.0
         return True
