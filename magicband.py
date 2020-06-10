@@ -33,7 +33,7 @@ import pygame
 #mickey_pixels = 40 
 
 config = configparser.ConfigParser()
-config.read('config.conf')
+config.read('settings.conf')
 print_band_id = config.get('Settings', 'print_band_id')
 reverse_circle = config.get('Settings', 'reverse_circle')
 ring_pixels = config.get('Settings', 'ring_pixels')
