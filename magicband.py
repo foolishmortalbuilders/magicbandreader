@@ -17,19 +17,27 @@ import time
 import os.path
 from os import path
 import random 
+import configparser
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
 # print band ids when read  set to True to see band ids on command line
-print_band_id = False
+#print_band_id = False
 
 # Reverse the circle lights direction
-reverse_circle = True
+#reverse_circle = True
 
 # The number of NeoPixels
-ring_pixels = 50 
-mickey_pixels = 40 
+#ring_pixels = 50 
+#mickey_pixels = 40 
+
+config = configparser.ConfigParser()
+config.read('config.conf')
+print_band_id = config.get('Settings', 'print_band_id')
+reverse_circle = config.get('Settings', 'reverse_circle')
+ring_pixels = config.get('Settings', 'ring_pixels')
+mickey_pixels = config.get('Settings', 'mickey_pixels')
 
 COLOR_GREEN = (255,0,0) 
 COLOR_RED   = (0,255,0)
