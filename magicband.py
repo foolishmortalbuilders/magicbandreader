@@ -39,11 +39,16 @@ reverse_circle = config.get('Settings', 'reverse_circle')
 ring_pixels = config.get('Settings', 'ring_pixels')
 mickey_pixels = config.get('Settings', 'mickey_pixels')
 
-COLOR_GREEN = (255,0,0) 
-COLOR_RED   = (0,255,0)
-COLOR_BLUE  = (0,0,255)
-COLOR_WHITE = (255,255,255)
-COLOR_PURPLE = (0,153,153)
+#COLOR_GREEN = (255,0,0) 
+#COLOR_RED   = (0,255,0)
+#COLOR_BLUE  = (0,0,255)
+#COLOR_WHITE = (255,255,255)
+#COLOR_PURPLE = (0,153,153)
+COLOR_GREEN = config.get('Settings', 'COLOR_GREEN')
+COLOR_RED = config.get('Settings', 'COLOR_RED')
+COLOR_BLUE = config.get('Settings', 'COLOR_BLUE')
+COLOR_WHITE = config.get('Settings', 'COLOR_WHITE')
+COLOR_PURPLE = config.get('Settings', 'COLOR_PURPLE')
 
 # Sequence Definitions
 #
