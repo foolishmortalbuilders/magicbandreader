@@ -138,7 +138,6 @@ class MagicBand(cli.CommandLineInterface):
               uri=sequence.get('webhook'),
               method='POST',
               headers=message_headers,
-              body=dumps(bot_message),
            )
            print(response)
 
