@@ -123,7 +123,6 @@ class MagicBand(cli.CommandLineInterface):
     def playSequence(self, sequence):
         ringSoundFound = self.loadSound(sequence.get('spin_sound')) 
         soundFound = self.loadSound(sequence.get('sound'))
-        webhookFound = self.loadWebHook(sequence.get('webhook'))
         if ringSoundFound == True:
             self.playSound(sequence.get('spin_sound'))
 
