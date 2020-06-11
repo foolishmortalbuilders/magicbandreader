@@ -17,31 +17,31 @@ import time
 import os.path
 from os import path
 import random 
-import configparser
+import configobj
 from json import dumps
 from httplib2 import Http
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
-config = configparser.ConfigParser()
-config.read('settings.conf')
-print_band_id = bool(config.get('Settings', 'print_band_id'))
-reverse_circle = bool(config.get('Settings', 'reverse_circle'))
-ring_pixels = int(config.get('Settings', 'ring_pixels'))
-mickey_pixels = int(config.get('Settings', 'mickey_pixels'))
+config = configobj.ConfigObj('settings.conf')
+print_band_id = bool(config['Settings']['print_band_id'])
+reverse_circle = bool(config['Settings']['reverse_circle'])
+ring_pixels = int(config['Settings']['ring_pixels'])
+mickey_pixels = int(config['Settings']['mickey_pixels'])
 
-COLOR_GREEN = eval(config.get('Settings', 'COLOR_GREEN'))
-COLOR_RED = eval(config.get('Settings', 'COLOR_RED'))
-COLOR_BLUE = eval(config.get('Settings', 'COLOR_BLUE'))
-COLOR_WHITE = eval(config.get('Settings', 'COLOR_WHITE'))
-COLOR_PURPLE = eval(config.get('Settings', 'COLOR_PURPLE'))
-COLOR_LIGHTBLUE = eval(config.get('Settings', 'COLOR_LIGHTBLUE'))
-COLOR_STITCH = eval(config.get('Settings', 'COLOR_STITCH'))
-COLOR_GRAY = eval(config.get('Settings', 'COLOR_GRAY'))
-COLOR_YELLOW = eval(config.get('Settings', 'COLOR_YELLOW'))
-
-sequences = eval(config.get('Settings', 'sequences'))
+COLORS = {
+    "green": (255,0,0),
+    "red" : (0,255,0),
+    "yellow" : (255,255,0),
+    "lightblue" : (153,204,255),
+    "blue" : (0,0,255),
+    "white" : (255,255,255),
+    "purple" : (0,153,153),
+    "gray" : (128,128,128),
+    "stitch" : (0,39,144),
+}
+sequences = config['sequences']
 
 # GPIO Pin (Recommend GPIO18)
 pixel_pin = board.D18
@@ -79,7 +79,7 @@ class MagicBand(cli.CommandLineInterface):
     # play startup sequence
     def playStartupSequence(self):
         for x in range(0,3):
-            self.do_lights_on(COLOR_WHITE)
+            self.do_lights_on(COLORS["white"])
             time.sleep(.5)
             self.do_lights_off()
             time.sleep(.5)
@@ -116,8 +116,12 @@ class MagicBand(cli.CommandLineInterface):
         bandid = str(binascii.hexlify(tag.identifier),"utf-8") 
         if print_band_id == True:
             print("MagicBandId = " + bandid)
-        sequence = self.lookupBand(bandid)
-        self.playSequence(sequence)
+
+        if bandid in config['bands']:
+            for sequence in config['bands']['bandid']:
+                self.playSequence(config['sequences'][sequence])
+        else:
+            self.playSequence(config['sequences'][random.choice(config['bands']['unknown'])])
 
 
     def playSequence(self, sequence):
@@ -126,7 +130,7 @@ class MagicBand(cli.CommandLineInterface):
         if ringSoundFound == True:
             self.playSound(sequence.get('spin_sound'))
 
-        self.do_lights_circle(sequence.get('color_ring'), reverse_circle)
+        self.do_lights_circle(COLORS[sequence.get('color_ring')], reverse_circle)
 
         if soundFound == True:
             self.playSound(sequence.get('sound')) 
@@ -142,8 +146,8 @@ class MagicBand(cli.CommandLineInterface):
            print(response)
 
         # All lights on
-        self.do_lights_on_fade(sequence.get('color_mouse'))
-        time.sleep(sequence.get('hold_seconds'))
+        self.do_lights_on_fade(COLORS[sequence.get('color_mouse')])
+        time.sleep(int(sequence.get('hold_seconds')))
         self.do_lights_off_fade() 
         self.pixels.brightness = 1.0
         return True
@@ -230,4 +234,3 @@ if __name__ == '__main__':
         _prog = e.args[1].split()
     else:
         sys.exit(0)
-
