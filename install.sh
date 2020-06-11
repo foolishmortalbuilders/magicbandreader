@@ -6,4 +6,5 @@ sudo apt-get install -y python-smbus
 sudo pip3 install --upgrade setuptools
 sudo pip3 install RPI.GPIO
 sudo pip3 install PySDL2 pygame nfcpy
+sudo pip3 install configobj
 amixer set PCM 100%
