@@ -118,8 +118,11 @@ class MagicBand(cli.CommandLineInterface):
             print("MagicBandId = " + bandid)
 
         if bandid in config['bands']:
-            for sequence in config['bands']['bandid']:
-                self.playSequence(config['sequences'][sequence])
+            sequences = config['bands'][bandid]
+            if sequences:
+                sequences = sequences if type(sequences) == list else [sequences,]
+                for sequence in sequences:
+                    self.playSequence(config['sequences'][sequence])
         else:
             self.playSequence(config['sequences'][random.choice(config['bands']['unknown'])])
 
@@ -135,11 +138,14 @@ class MagicBand(cli.CommandLineInterface):
         if soundFound == True:
             self.playSound(sequence.get('sound')) 
 
-        if sequence.get('webhook'):
+        webhooks = sequence.get('webhooks', [])
+        if webhooks:
+            webhooks = webhooks if type(webhooks) == list else [webhooks,]
+        for hook in webhooks:
            message_headers = {'Content-Type': 'application/json; charset=UTF-8'}
            http_obj = Http()
            response = http_obj.request(
-              uri=sequence.get('webhook'),
+              uri=hook,
               method='POST',
               headers=message_headers,
            )
