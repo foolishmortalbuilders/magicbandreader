@@ -117,15 +117,10 @@ class MagicBand(cli.CommandLineInterface):
         if print_band_id == True:
             print("MagicBandId = " + bandid)
 
-        if bandid in config['bands']:
-            sequences = config['bands'][bandid]
-            if sequences:
-                sequences = sequences if type(sequences) == list else [sequences,]
-                for sequence in sequences:
-                    self.playSequence(config['sequences'][sequence])
-        else:
-            self.playSequence(config['sequences'][random.choice(config['bands']['unknown'])])
-
+        sequences = config['bands'].get(bandid) or config['bands']['unknown']
+        if sequences:
+            sequences = sequences if type(sequences) == list else [sequences,]
+            self.playSequence(config['sequences'][random.choice(sequences)])
 
     def playSequence(self, sequence):
         ringSoundFound = self.loadSound(sequence.get('spin_sound')) 
