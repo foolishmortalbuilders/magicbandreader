@@ -18,73 +18,33 @@ import os.path
 from os import path
 import random 
 import configparser
+from json import dumps
+from httplib2 import Http
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
-# print band ids when read  set to True to see band ids on command line
-#print_band_id = False
-
-# Reverse the circle lights direction
-#reverse_circle = True
-
-# The number of NeoPixels
-#ring_pixels = 50 
-#mickey_pixels = 40 
-
 config = configparser.ConfigParser()
 config.read('settings.conf')
-print_band_id = config.get('Settings', 'print_band_id')
-reverse_circle = config.get('Settings', 'reverse_circle')
-ring_pixels = config.get('Settings', 'ring_pixels')
-mickey_pixels = config.get('Settings', 'mickey_pixels')
+print_band_id = bool(config.get('Settings', 'print_band_id'))
+reverse_circle = bool(config.get('Settings', 'reverse_circle'))
+ring_pixels = int(config.get('Settings', 'ring_pixels'))
+mickey_pixels = int(config.get('Settings', 'mickey_pixels'))
 
-#COLOR_GREEN = (255,0,0) 
-#COLOR_RED   = (0,255,0)
-#COLOR_BLUE  = (0,0,255)
-#COLOR_WHITE = (255,255,255)
-#COLOR_PURPLE = (0,153,153)
-COLOR_GREEN = config.get('Settings', 'COLOR_GREEN')
-COLOR_RED = config.get('Settings', 'COLOR_RED')
-COLOR_BLUE = config.get('Settings', 'COLOR_BLUE')
-COLOR_WHITE = config.get('Settings', 'COLOR_WHITE')
-COLOR_PURPLE = config.get('Settings', 'COLOR_PURPLE')
+COLOR_GREEN = eval(config.get('Settings', 'COLOR_GREEN'))
+COLOR_RED = eval(config.get('Settings', 'COLOR_RED'))
+COLOR_BLUE = eval(config.get('Settings', 'COLOR_BLUE'))
+COLOR_WHITE = eval(config.get('Settings', 'COLOR_WHITE'))
+COLOR_PURPLE = eval(config.get('Settings', 'COLOR_PURPLE'))
+COLOR_LIGHTBLUE = eval(config.get('Settings', 'COLOR_LIGHTBLUE'))
+COLOR_STITCH = eval(config.get('Settings', 'COLOR_STITCH'))
+COLOR_GRAY = eval(config.get('Settings', 'COLOR_GRAY'))
+COLOR_YELLOW = eval(config.get('Settings', 'COLOR_YELLOW'))
 
-# Sequence Definitions
-#
-sequences = { 
-          'any1' : { 'color_ring' : COLOR_GREEN,
-                    'color_mouse': COLOR_GREEN,
-                    'spin_sound' : '',
-                    'hold_seconds': 1.5,
-                    'sound' : 'magicband_fastpass.mp3'},
-
-          'any2' : { 'color_ring' : COLOR_BLUE,
-                    'color_mouse': COLOR_BLUE,
-                    'spin_sound' : 'ring_sound.wav',
-                    'hold_seconds': 1.5,
-                    'sound' : 'magicband_fastpass.mp3'},
-
-           # fastpass sound
-           '044d63b27c5c80': { 'color_ring' : COLOR_GREEN,
-                               'color_mouse': COLOR_GREEN,
-                               'spin_sound' :'',
-                               'hold_seconds': 1.5,
-                               'sound' : 'magicband_fastpass.mp3'},
-         
-           # dvc welcome home
-           '044d63b27c5c80': { 'color_ring' : COLOR_PURPLE,
-                               'color_mouse': COLOR_PURPLE,
-                               'spin_sound' : 'ring_sound.wav',
-                               'hold_seconds': 1.5,
-                               'sound' : 'justhome.wav'}
-}
-
-
+sequences = eval(config.get('Settings', 'sequences'))
 
 # GPIO Pin (Recommend GPIO18)
 pixel_pin = board.D18
-
 
 ######### DON'T EDIT BELOW THIS LINE ##########################
 
@@ -133,6 +93,14 @@ class MagicBand(cli.CommandLineInterface):
             return False
         return True
 
+    def loadWebHook(self, fname):
+        if fname == '':
+            return False
+        if not path.exists(fname):
+            print("Missing Webhook :" + fname)
+            return False
+        return True
+
     # play sound
     def playSound(self, fname):
         pygame.mixer.music.load(fname)
@@ -163,6 +131,7 @@ class MagicBand(cli.CommandLineInterface):
     def playSequence(self, sequence):
         ringSoundFound = self.loadSound(sequence.get('spin_sound')) 
         soundFound = self.loadSound(sequence.get('sound'))
+        webhookFound = self.loadWebHook(sequence.get('webhook'))
         if ringSoundFound == True:
             self.playSound(sequence.get('spin_sound'))
 
@@ -170,7 +139,18 @@ class MagicBand(cli.CommandLineInterface):
 
         if soundFound == True:
             self.playSound(sequence.get('sound')) 
-  
+
+        if webhookFound == True:
+           message_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+           http_obj = Http()
+           response = http_obj.request(
+              uri=self.loadWebHook(sequence.get('webhook')),
+              method='POST',
+              headers=message_headers,
+              body=dumps(bot_message),
+           )
+           print(response)
+
         # All lights on
         self.do_lights_on_fade(sequence.get('color_mouse'))
         time.sleep(sequence.get('hold_seconds'))
