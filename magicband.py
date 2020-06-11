@@ -93,14 +93,6 @@ class MagicBand(cli.CommandLineInterface):
             return False
         return True
 
-    def loadWebHook(self, fname):
-        if fname == '':
-            return False
-        if not path.exists(fname):
-            print("Missing Webhook :" + fname)
-            return False
-        return True
-
     # play sound
     def playSound(self, fname):
         pygame.mixer.music.load(fname)
@@ -140,11 +132,11 @@ class MagicBand(cli.CommandLineInterface):
         if soundFound == True:
             self.playSound(sequence.get('sound')) 
 
-        if webhookFound == True:
+        if sequence.get('webhook'):
            message_headers = {'Content-Type': 'application/json; charset=UTF-8'}
            http_obj = Http()
            response = http_obj.request(
-              uri=self.loadWebHook(sequence.get('webhook')),
+              uri=sequence.get('webhook'),
               method='POST',
               headers=message_headers,
               body=dumps(bot_message),
