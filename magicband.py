@@ -177,37 +177,37 @@ class MagicBand(cli.CommandLineInterface):
                     pixelNum = x + i
                     if reverse == True:
                         pixelNum = self.ring_pixels- (pixelNum - 1)
+                    print('On Pixel: ' + str(pixelNum))
                     self.pixels[pixelNum] = color
             if (i > size) :
                 off = (i-size)
                 if reverse == True:
                     off = self.ring_pixels- (off - 1)
                 self.pixels[off] = 0
+                print('Off Pixel:' + str(off))
             self.pixels.show()
+            #print(str(i) + ' ' + str(x))
             time.sleep(wait)
 
-    def rainbowCycle(self, wait_ms=20, iterations=5):
+    def rainbowCycle(self, wait_ms, iterations):
         size = self.RING_LIGHT_SIZE
         for j in range(256*iterations):
             for i in range(self.ring_pixels):
                 self.pixels[i] = self.wheel((int(i * 256 / self.ring_pixels) + j) & 255)
-                print(i)
                 print(self.wheel((int(i * 256 / self.ring_pixels) + j) & 255))
-            self.pixels[i+1] = 0
             self.pixels.show()
             time.sleep(wait_ms/1000)
 
     def do_lights_circle(self,color, reverse):
         if color == (0,0,0):
-            self.rainbowCycle(1,1)
             self.rainbowCycle(.1,1)
             self.do_lights_off_fade()
-        #self.color_chase(color,.01, reverse)
-        self.color_chase(color,.01, reverse)
-        self.color_chase(color,.001, reverse)
-        self.color_chase(color,.0001, reverse)
-        self.color_chase(color,.0001, reverse)
-        self.color_chase(color,.0001, reverse)
+        else:
+            #self.color_chase(color,.01, reverse)
+            self.color_chase(color,.01, reverse)
+            self.color_chase(color,.001, reverse)
+            self.color_chase(color,.0001, reverse)
+            self.color_chase(color,.0001, reverse)
 
     def do_lights_on(self, color):
         for i in range(self.total_pixels):
