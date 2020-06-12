@@ -40,6 +40,7 @@ COLORS = {
     "purple" : (0,153,153),
     "gray" : (128,128,128),
     "stitch" : (0,39,144),
+    "rainbow" : (0,0,0),
 }
 sequences = config['sequences']
 
@@ -76,6 +77,18 @@ class MagicBand(cli.CommandLineInterface):
     def on_rdwr_startup(self, targets):
         return targets
 
+    # rainbow stuff
+    @staticmethod
+    def wheel(pos):
+        if pos < 85:
+             return (pos * 3, 255 - pos * 3, 0)
+        elif pos < 170:
+             pos -= 85
+             return (255 - pos * 3, 0, pos * 3)
+        else:
+             pos -= 170
+             return (0, pos * 3, 255 - pos * 3)
+
     # play startup sequence
     def playStartupSequence(self):
         for x in range(0,3):
@@ -97,7 +110,6 @@ class MagicBand(cli.CommandLineInterface):
     def playSound(self, fname):
         pygame.mixer.music.load(fname)
         pygame.mixer.music.play()
-     
 
     # Returns bandid values if that bandid exists, otherwise returns random 'any*'  
     def lookupBand(self, bandid):
@@ -174,7 +186,18 @@ class MagicBand(cli.CommandLineInterface):
             self.pixels.show()
             time.sleep(wait)
 
+    def rainbowCycle(self, wait_ms=20, iterations=5):
+        for j in range(256*iterations):
+            for i in range(self.ring_pixels):
+                self.pixels[i] = self.wheel((int(i * 256 / self.ring_pixels) + j) & 255)
+            self.pixels[i-1] = 0
+            self.pixels.show()
+            time.sleep(wait_ms/1000.0)
+
     def do_lights_circle(self,color, reverse):
+        if color == (0,0,0):
+            self.rainbowCycle(1,1)
+            self.rainbowCycle(.1,1)
         #self.color_chase(color,.01, reverse)
         self.color_chase(color,.01, reverse)
         self.color_chase(color,.001, reverse)
