@@ -177,14 +177,14 @@ class MagicBand(cli.CommandLineInterface):
                     pixelNum = x + i
                     if reverse == True:
                         pixelNum = self.ring_pixels- (pixelNum - 1)
-                    print('On Pixel: ' + str(pixelNum))
+                    #print('On Pixel: ' + str(pixelNum))
                     self.pixels[pixelNum] = color
             if (i > size) :
                 off = (i-size)
                 if reverse == True:
                     off = self.ring_pixels- (off - 1)
                 self.pixels[off] = 0
-                print('Off Pixel:' + str(off))
+                #print('Off Pixel:' + str(off))
             self.pixels.show()
             #print(str(i) + ' ' + str(x))
             time.sleep(wait)
@@ -201,7 +201,7 @@ class MagicBand(cli.CommandLineInterface):
     def do_lights_circle(self,color, reverse):
         if color == (0,0,0):
             self.rainbowCycle(.1,1)
-            self.do_lights_off_fade()
+            #self.do_lights_off_fade()
         else:
             #self.color_chase(color,.01, reverse)
             self.color_chase(color,.01, reverse)
