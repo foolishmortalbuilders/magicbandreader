@@ -198,6 +198,16 @@ class MagicBand(cli.CommandLineInterface):
             self.pixels.show()
             time.sleep(wait_ms/1000)
 
+    def theaterChase( wait_ms=20, iterations=5):
+        for j in range(256*iterations):
+            for i in range(self.ring_pixels):
+                if (i + j) % 3 == 0 :
+                    self.pixels[i] = (255,0,0)
+                else:
+                    self.pixels[i] = (0,255,0)
+            self.pixels.show()
+            time.sleep(wait_ms/1000)
+
     def do_lights_circle(self,color, reverse):
         if color == (0,0,0):
             self.rainbowCycle(.1,1)
