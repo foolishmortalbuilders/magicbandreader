@@ -124,6 +124,7 @@ class MagicBand(cli.CommandLineInterface):
         randomsound = random.choice(lst)
         return randomsound 
 
+    # Plays the sequence defined for the band, will play randomly if there is more than one defined
     def on_rdwr_connect(self, tag):
         bandid = str(binascii.hexlify(tag.identifier),"utf-8") 
         if print_band_id == True:
@@ -133,6 +134,22 @@ class MagicBand(cli.CommandLineInterface):
         if sequences:
             sequences = sequences if type(sequences) == list else [sequences,]
             self.playSequence(config['sequences'][random.choice(sequences)])
+
+    # Plays every sequence defined for a bandid in a row
+    #def on_rdwr_connect(self, tag):
+    #    bandid = str(binascii.hexlify(tag.identifier),"utf-8") 
+    #    if print_band_id == True:
+    #        print("MagicBandId = " + bandid)
+
+    #    if bandid in config['bands']:
+    #        sequences = config['bands'][bandid]
+    #        if sequences:
+    #            sequences = sequences if type(sequences) == list else [sequences,]
+    #            for sequence in sequences:
+    #                self.playSequence(config['sequences'][sequence])
+    #    else:
+    #        self.playSequence(config['sequences'][random.choice(config['bands']['unknown'])])
+
 
     def playSequence(self, sequence):
         ringSoundFound = self.loadSound(sequence.get('spin_sound')) 
