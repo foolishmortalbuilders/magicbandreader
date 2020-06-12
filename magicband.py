@@ -31,16 +31,23 @@ ring_pixels = int(config['Settings']['ring_pixels'])
 mickey_pixels = int(config['Settings']['mickey_pixels'])
 
 COLORS = {
-    "green": (255,0,0),
     "red" : (0,255,0),
+    "electricred" : (228,3,3),
+    "orange" : (255,165,0),
+    "dark orange" : (255,140,0),
     "yellow" : (255,255,0),
-    "lightblue" : (153,204,255),
+    "canaryyellow" : (255,237,0),
+    "green": (255,0,0),
+    "lasallegreen" : (0,128,38),
     "blue" : (0,0,255),
+    "patriarch" : (117,7,135),
+    "lightblue" : (153,204,255),
     "white" : (255,255,255),
     "purple" : (0,153,153),
     "gray" : (128,128,128),
     "stitch" : (0,39,144),
     "rainbow" : (0,0,0),
+    "pride" : (0,0,1),
 }
 sequences = config['sequences']
 
@@ -194,11 +201,11 @@ class MagicBand(cli.CommandLineInterface):
         for j in range(256*iterations):
             for i in range(self.ring_pixels):
                 self.pixels[i] = self.wheel((int(i * 256 / self.ring_pixels) + j) & 255)
-                print(self.wheel((int(i * 256 / self.ring_pixels) + j) & 255))
+                #print(self.wheel((int(i * 256 / self.ring_pixels) + j) & 255))
             self.pixels.show()
             time.sleep(wait_ms/1000)
 
-    def theaterChase( wait_ms=20, iterations=5):
+    def theaterChase(self, wait_ms=20, iterations=5):
         for j in range(256*iterations):
             for i in range(self.ring_pixels):
                 if (i + j) % 3 == 0 :
@@ -210,8 +217,16 @@ class MagicBand(cli.CommandLineInterface):
 
     def do_lights_circle(self,color, reverse):
         if color == (0,0,0):
-            self.rainbowCycle(.1,1)
+            self.rainbowCycle(1,1)
+            #self.theaterChase(.1,1)
             #self.do_lights_off_fade()
+        elif color == (0,0,1):
+            self.color_chase((228,3,3),.001, reverse)
+            self.color_chase((255,140,0),.0001, reverse)
+            self.color_chase((255,237,0),.0001, reverse)
+            self.color_chase((0,128,38),.0001, reverse)
+            self.color_chase((0,77,255),.0001, reverse)
+            self.color_chase((117,7,135),.0001, reverse)
         else:
             #self.color_chase(color,.01, reverse)
             self.color_chase(color,.01, reverse)
