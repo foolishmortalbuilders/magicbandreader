@@ -124,7 +124,6 @@ class MagicBand(cli.CommandLineInterface):
         randomsound = random.choice(lst)
         return randomsound 
 
-    # Plays the sequence defined for the band, will play randomly if there is more than one defined
     def on_rdwr_connect(self, tag):
         bandid = str(binascii.hexlify(tag.identifier),"utf-8") 
         if print_band_id == True:
@@ -134,22 +133,6 @@ class MagicBand(cli.CommandLineInterface):
         if sequences:
             sequences = sequences if type(sequences) == list else [sequences,]
             self.playSequence(config['sequences'][random.choice(sequences)])
-
-    # Plays every sequence defined for a bandid in a row
-    #def on_rdwr_connect(self, tag):
-    #    bandid = str(binascii.hexlify(tag.identifier),"utf-8") 
-    #    if print_band_id == True:
-    #        print("MagicBandId = " + bandid)
-
-    #    if bandid in config['bands']:
-    #        sequences = config['bands'][bandid]
-    #        if sequences:
-    #            sequences = sequences if type(sequences) == list else [sequences,]
-    #            for sequence in sequences:
-    #                self.playSequence(config['sequences'][sequence])
-    #    else:
-    #        self.playSequence(config['sequences'][random.choice(config['bands']['unknown'])])
-
 
     def playSequence(self, sequence):
         ringSoundFound = self.loadSound(sequence.get('spin_sound')) 
@@ -204,20 +187,25 @@ class MagicBand(cli.CommandLineInterface):
             time.sleep(wait)
 
     def rainbowCycle(self, wait_ms=20, iterations=5):
+        size = self.RING_LIGHT_SIZE
         for j in range(256*iterations):
             for i in range(self.ring_pixels):
                 self.pixels[i] = self.wheel((int(i * 256 / self.ring_pixels) + j) & 255)
-            self.pixels[i-1] = 0
+                print(i)
+                print(self.wheel((int(i * 256 / self.ring_pixels) + j) & 255))
+            self.pixels[i+1] = 0
             self.pixels.show()
-            time.sleep(wait_ms/1000.0)
+            time.sleep(wait_ms/1000)
 
     def do_lights_circle(self,color, reverse):
         if color == (0,0,0):
             self.rainbowCycle(1,1)
             self.rainbowCycle(.1,1)
+            self.do_lights_off_fade()
         #self.color_chase(color,.01, reverse)
         self.color_chase(color,.01, reverse)
         self.color_chase(color,.001, reverse)
+        self.color_chase(color,.0001, reverse)
         self.color_chase(color,.0001, reverse)
         self.color_chase(color,.0001, reverse)
 
