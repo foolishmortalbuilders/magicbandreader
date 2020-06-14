@@ -118,12 +118,12 @@ class MagicBand(cli.CommandLineInterface):
         pygame.mixer.music.load(fname)
         pygame.mixer.music.play()
 
-    # Returns bandid values if that bandid exists, otherwise returns random 'any*'  
+    # Returns bandid values if that bandid exists, otherwise returns random 'any*' 
+    # New "unknown" value in settings.conf overrides this  
     def lookupBand(self, bandid):
         if bandid in sequences:
             return sequences.get(bandid)
 
-        # bandid not found, return a random sound that begins with 'any'
         lst = [] 
         for key,ele in sequences.items():
             if key.startswith('any'):
@@ -184,16 +184,13 @@ class MagicBand(cli.CommandLineInterface):
                     pixelNum = x + i
                     if reverse == True:
                         pixelNum = self.ring_pixels- (pixelNum - 1)
-                    #print('On Pixel: ' + str(pixelNum))
                     self.pixels[pixelNum] = color
             if (i > size) :
                 off = (i-size)
                 if reverse == True:
                     off = self.ring_pixels- (off - 1)
                 self.pixels[off] = 0
-                #print('Off Pixel:' + str(off))
             self.pixels.show()
-            #print(str(i) + ' ' + str(x))
             time.sleep(wait)
 
     def rainbowCycle(self, wait_ms, iterations):
@@ -216,11 +213,9 @@ class MagicBand(cli.CommandLineInterface):
             time.sleep(wait_ms/1000)
 
     def do_lights_circle(self,color, reverse):
-        if color == (0,0,0):
+        if color == COLORS['rainbow']:
             self.rainbowCycle(1,1)
-            #self.theaterChase(.1,1)
-            #self.do_lights_off_fade()
-        elif color == (0,0,1):
+        elif color == COLORS['pride']:
             self.color_chase((228,3,3),.001, reverse)
             self.color_chase((255,140,0),.0001, reverse)
             self.color_chase((255,237,0),.0001, reverse)
@@ -228,7 +223,6 @@ class MagicBand(cli.CommandLineInterface):
             self.color_chase((0,77,255),.0001, reverse)
             self.color_chase((117,7,135),.0001, reverse)
         else:
-            #self.color_chase(color,.01, reverse)
             self.color_chase(color,.01, reverse)
             self.color_chase(color,.001, reverse)
             self.color_chase(color,.0001, reverse)
