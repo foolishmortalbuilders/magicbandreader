@@ -2,7 +2,8 @@
 Reads magic bands and plays sounds and lights up leds, just like the real thing.
 Use webhook URLS to turn on lights or unlock locks.
 
-NOTE: Sound files are no longer included. Either supply your own mp2 sound files or contact us through youtube for more information.
+# NOTE
+Sound files are no longer included. Either supply your own mp3 sound files or contact us through youtube for more information.
 
 # 3D Printer pieces:
 Find the pieces to make this model on thingiverse:
