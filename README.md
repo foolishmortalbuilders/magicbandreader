@@ -51,7 +51,7 @@ Note: if you are using the older videos to follow along, the main difference wit
 
 # Config
 
-Set the ring_pixels and mickey_pixel counts to the correct value
+Set the ring_pixels and mickey_pixel counts to the correct value. Set top_of_ring to the pixel number at top of ring.
 
 # Troubleshooting
 
