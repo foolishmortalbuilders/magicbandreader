@@ -29,6 +29,7 @@ print_band_id = bool(config['Settings']['print_band_id'])
 reverse_circle = bool(config['Settings']['reverse_circle'])
 ring_pixels = int(config['Settings']['ring_pixels'])
 mickey_pixels = int(config['Settings']['mickey_pixels'])
+top_of_ring = int(config['Settings']['top_of_ring'])
 
 COLORS = {
     "red" : (0,255,0),
@@ -48,6 +49,7 @@ COLORS = {
     "stitch" : (0,39,144),
     "rainbow" : (0,0,0),
     "pride" : (0,0,1),
+    "warmwhite" : (255,255,102),
 }
 sequences = config['sequences']
 
@@ -150,32 +152,50 @@ class MagicBand(cli.CommandLineInterface):
         self.do_lights_circle(COLORS[sequence.get('color_ring')], reverse_circle)
 
         if soundFound == True:
-            self.playSound(sequence.get('sound')) 
+            self.playSound(sequence.get('sound'))
 
         webhooks = sequence.get('webhooks', [])
         if webhooks:
             webhooks = webhooks if type(webhooks) == list else [webhooks,]
         for hook in webhooks:
-           message_headers = {'Content-Type': 'application/json; charset=UTF-8'}
-           http_obj = Http()
-           response = http_obj.request(
-              uri=hook,
-              method='POST',
-              headers=message_headers,
-           )
-           print(response)
+            message_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+            http_obj = Http()
+            response = http_obj.request(
+                uri=hook,
+                method='POST',
+                headers=message_headers,
+            )
+            print(response)
 
-        # All lights on
-        self.do_lights_on_fade(COLORS[sequence.get('color_mouse')])
-        time.sleep(int(sequence.get('hold_seconds')))
-        self.do_lights_off_fade() 
+        #Check for a special sequence (ex. limited edition band)
+        specialSequence = sequence.get('special_sequence')
+
+        if specialSequence is not None:
+            #Run special sequence
+            self.runSpecialSequence(specialSequence, reverse_circle)
+        else:
+            # Standard light up and hold
+            self.do_lights_on_fade(COLORS[sequence.get('color_mouse')])
+            time.sleep(int(sequence.get('hold_seconds')))
+            self.do_lights_off_fade() 
         self.pixels.brightness = 1.0
         return True
+
+    # Called for special band sequences (limited edition, etc)
+    def runSpecialSequence(self, specialSequence, reverse) :
+        if specialSequence == 'epcot35_red' :
+            self.do_lights_on(COLORS["dark orange"])
+            self.longChaseLights(COLORS["purple"], COLORS["warmwhite"], 80, 25)
+            self.do_ring_off()
+            self.lightSpin(COLORS["green"], 5, reverse)
+            self.changeMouseColorFade(COLORS["dark orange"], COLORS["green"], 1, 20)
+            self.do_lights_off_fade(.5)
 
     def on_card_startup(self, target):
         # Nothing needed
         log.info("Listening for magicbands")
 
+    #Single color spin around ring
     def color_chase(self, color, wait, reverse):
         size = self.RING_LIGHT_SIZE
         for i in range(self.ring_pixels+size+1):
@@ -193,6 +213,7 @@ class MagicBand(cli.CommandLineInterface):
             self.pixels.show()
             time.sleep(wait)
 
+    #Rainbow ring
     def rainbowCycle(self, wait_ms, iterations):
         size = self.RING_LIGHT_SIZE
         for j in range(256*iterations):
@@ -202,6 +223,7 @@ class MagicBand(cli.CommandLineInterface):
             self.pixels.show()
             time.sleep(wait_ms/1000)
 
+    #Light chasing theater marquee style
     def theaterChase(self, wait_ms=20, iterations=5):
         for j in range(256*iterations):
             for i in range(self.ring_pixels):
@@ -211,6 +233,63 @@ class MagicBand(cli.CommandLineInterface):
                     self.pixels[i] = (0,255,0)
             self.pixels.show()
             time.sleep(wait_ms/1000)
+
+    #Bars of lights around circle
+    def longChaseLights(self, color1, color2, wait_ms=20, iterations=5):
+        setColor = color1
+        for j in range(iterations):
+            for i in range(self.ring_pixels):
+                self.pixels[i] = setColor
+                if (i + j) % 5 == 0 :
+                    if setColor == color1 :
+                       setColor = color2
+                    else :
+                       setColor = color1
+            self.pixels.show()
+            time.sleep(wait_ms/1000)
+
+    #Fill circle with one color one light at a time
+    def lightSpin(self, color, wait_ms, reverse) :
+        pixelCounter = top_of_ring
+        for i in range(self.ring_pixels + 1) :
+            if reverse == True :
+                pixelNum = self.ring_pixels - (pixelCounter - 1)
+            else :
+                pixelNum = pixelCounter - 1
+            self.pixels[pixelNum] = color
+            if pixelCounter > self.ring_pixels :
+                pixelCounter = 1
+            else :
+                pixelCounter += 1
+            self.pixels.show()
+            time.sleep(wait_ms/1000)
+
+    #Change color of mouse from one to another
+    def changeMouseColorFade(self, color1, color2, wait_ms, steps) :
+        red = color1[0]
+        green = color1[1]
+        blue = color1[2]
+        redChange = self.fadeSteps(color1, color2, 0, steps)
+        greenChange = self.fadeSteps(color1, color2, 1, steps)
+        blueChange = self.fadeSteps(color1, color2, 2, steps)
+        for i in range(0,steps) :
+            red += int(redChange)
+            green += int(greenChange)
+            blue += int(blueChange)
+            for j in range(mickey_pixels) :
+                pixelNum = ring_pixels + j
+                self.pixels[pixelNum] = (red, green, blue)
+            self.pixels.show()
+            time.sleep(wait_ms/1000)
+
+    #Calculates difference between two color channel values
+    def fadeSteps(self, color1, color2, index, steps) :
+        diff = color2[index] - color1[index]
+        if steps != 0 :
+            change = diff / steps
+            return change
+        else :
+            return 0
 
     def do_lights_circle(self,color, reverse):
         if color == COLORS['rainbow']:
@@ -243,17 +322,22 @@ class MagicBand(cli.CommandLineInterface):
             self.pixels.show()
             time.sleep(.001)
 
-    def do_lights_off_fade(self):
+    def do_lights_off_fade(self, wait_ms=5):
         j = 1.01
         for x in range(100):
             j = j - .01
             self.pixels.brightness = j
             self.pixels.show()
-            time.sleep(.0005)
+            time.sleep(wait_ms/1000)
         self.do_lights_off()
 
     def do_lights_off(self):
         for i in range(self.total_pixels):
+            self.pixels[i] = 0
+        self.pixels.show()
+
+    def do_ring_off(self) :
+        for i in range(self.ring_pixels) :
             self.pixels[i] = 0
         self.pixels.show()
 
