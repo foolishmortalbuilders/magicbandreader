@@ -301,8 +301,6 @@ class MagicBand(cli.CommandLineInterface):
             self.color_chase((0,128,38),.0001, reverse)
             self.color_chase((0,77,255),.0001, reverse)
             self.color_chase((117,7,135),.0001, reverse)
-        #elif color == COLORS['epcot35']:
-            #self.longChaseLights(100,22)
         else:
             self.color_chase(color,.01, reverse)
             self.color_chase(color,.001, reverse)
