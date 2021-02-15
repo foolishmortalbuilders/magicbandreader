@@ -116,6 +116,7 @@ class MagicBand(cli.CommandLineInterface):
     # play sound
     def playSound(self, fname):
         pygame.mixer.music.load(fname)
+        pygame.mixer.music.set_volume(1)
         pygame.mixer.music.play()
 
     # Returns bandid values if that bandid exists, otherwise returns random 'any*' 
