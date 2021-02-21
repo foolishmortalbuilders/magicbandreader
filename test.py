@@ -21,7 +21,7 @@ import random
 import configobj
 from json import dumps
 from httplib2 import Http
-from threading import Thread, Event
+import threading
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
@@ -86,9 +86,9 @@ def playLightSequence(magicBandScannedEvent, ringPixels, totalPixels, magicBandO
                 lightSpeed = .1
         else:
             leadingIndex = pixelRingArray[0]
-            fadePixel(true, pixels[leadingIndex])
+            fadePixel(True, pixels[leadingIndex])
             trailingIndex = pixelRingArray[4]
-            fadePixel(false, pixels[trailingIndex])
+            fadePixel(False, pixels[trailingIndex])
             time.sleep(lightSpeed)
             leftRotate(pixelRingArray)
 
@@ -130,11 +130,11 @@ def fadePixel(out, pixel):
 
 class MagicBand():
     def __init__(self):
-        self.success = true
+        self.success = True
         self.successSequence = []
 
 class BandScannerAndSound(cli.CommandLineInterface):
-    def __init__(self, magicBandObject, scannedEvent):
+    def __init__(self, magicBandObject, scannedEvent):     
         self.bandObject = magicBandObject
         self.scannedEvent = scannedEvent
 
@@ -193,12 +193,11 @@ if __name__ == '__main__':
     magicBandObject = MagicBand()
     
     try:
-        lightsThread = Thread(name='lights',
+        lightsThread = threading.Thread(name='lights',
                 target=playLightSequence, args=(magicBandScannedEvent, ring_pixels, ring_pixels+mickey_pixels, magicBandObject))
 
-        bandAndSound = BandScannerAndSound(magicBandObject)
-        bandThread = Thread(="band",
-                        target=bandAndSound.run)
+        bandAndSound = BandScannerAndSound(magicBandObject, magicBandScannedEvent)
+        bandAndSound.run()
 
         lightsThread.start()
         lightsThread.join()
