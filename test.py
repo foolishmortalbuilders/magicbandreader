@@ -137,6 +137,12 @@ class BandScannerAndSound(cli.CommandLineInterface):
     def __init__(self, magicBandObject, scannedEvent):     
         self.bandObject = magicBandObject
         self.scannedEvent = scannedEvent
+        self.rdwr_commands = { }
+
+        parser = ArgumentParser(
+                formatter_class=argparse.RawDescriptionHelpFormatter,
+                description="")
+        super(BandScannerAndSound, self).__init__(parser, groups="rdwr dbg card clf")
 
     def on_rdwr_startup(self, targets):
         return targets
