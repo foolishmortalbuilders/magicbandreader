@@ -71,8 +71,7 @@ pygame.init()
 def playLightSequence(magicBandScannedEvent, ringPixels, totalPixels, magicBandObject):
     lightSpeed = .1
     pixelRingArray = list(range(0, ringPixels-1))
-    pixels = neopixel.NeoPixel(
-        pixel_pin, totalPixels, brightness=1.0, auto_write=False, pixel_order=neopixel.RGB)
+    pixels = neopixel.NeoPixel(pixel_pin, totalPixels, brightness=1.0, auto_write=False, pixel_order=neopixel.RGB)
 
     while not True:
         if not magicBandScannedEvent.isSet():
@@ -96,14 +95,14 @@ def playLightSequence(magicBandScannedEvent, ringPixels, totalPixels, magicBandO
 
 def showAllColored(pixels, color):
     for i in range(self.total_pixels):
-            pixels[i] = color
+        pixels[i] = color
 
-        pixels.show()
+    pixels.show()
 
 
 def leftRotate(array, d, n):
     for i in range(d):
-            leftRotateByOne(array, n)
+        leftRotateByOne(array, n)
 
 
 def leftRotateByOne(array, n):
