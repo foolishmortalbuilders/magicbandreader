@@ -22,6 +22,7 @@ import configobj
 from json import dumps
 from httplib2 import Http
 import threading
+import atexit
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
@@ -51,7 +52,6 @@ COLORS = {
     "pride": (0, 0, 1),
 }
 sequences = config['sequences']
-
 # GPIO Pin (Recommend GPIO18) GPIO13 is also a good choice
 pixel_pin = board.D18
 
@@ -67,10 +67,12 @@ pygame.mixer.pre_init(44100, -16, 1, 512)
 pygame.mixer.init()
 pygame.init()
 
+totalPixels = ring_pixels+mickey_pixels
 
 def playLightSequence(magicBandScannedEvent, ringPixels, totalPixels, magicBandObject):
     lightSpeed = .1
     pixelRingArray = list(range(0, ringPixels-1))
+    totalPixels = totalPixels
     pixels = neopixel.NeoPixel(pixel_pin, totalPixels, brightness=1.0, auto_write=False, pixel_order=neopixel.RGB)
     print("Playing light sequence")
 
@@ -82,10 +84,10 @@ def playLightSequence(magicBandScannedEvent, ringPixels, totalPixels, magicBandO
 
         if lightSpeed < 0.00001:
             if magicBandObject.success == True:
-                showAllColored(pixels, COLORS["green"], totalPixels)
+                showAllColored(pixels, COLORS["green"])
                 time.sleep(2)
                 magicBandScannedEvent.clear()
-                doLightFadeOff(pixels, totalPixels)
+                doLightFadeOff(pixels)
                 pixels.brightness = 1.0
                 lightSpeed = .1
         else:
@@ -100,22 +102,22 @@ def playLightSequence(magicBandScannedEvent, ringPixels, totalPixels, magicBandO
             time.sleep(lightSpeed)
             pixelRingArray = rotateArray(pixelRingArray, len(pixelRingArray), 1)
 
-def doLightFadeOff(pixels, totalPixels):
+def doLightFadeOff(pixels):
     brightness = 1.01
     for x in range(100):
         brightness = brightness - .01
         pixels.brightness = brightness
         pixels.show()
         time.sleep(.0005)
-    doLightsOff(pixels, totalPixels)
+    doLightsOff(pixels)
 
-def doLightsOff(pixels, totalPixels):
+def doLightsOff(pixels):
     for i in range(totalPixels):
         pixels[i] = 0 
     pixels.show()
 
-def showAllColored(pixels, color, total):
-    for i in range(total):
+def showAllColored(pixels, color):
+    for i in range(totalPixels):
         pixels[i] = color
 
     pixels.show()
@@ -133,6 +135,9 @@ def rotateArray(arr, n, d):
         d = d + 1
     arr[:] = arr[: i] + temp
     return arr
+
+#def exit_handler():
+
 
 def printArray(arr,size):
     for i in range(size):
@@ -166,6 +171,8 @@ class BandScannerAndSound(cli.CommandLineInterface):
         return targets
 
     def on_rdwr_connect(self, tag):
+        if self.scannedEvent.isSet():
+            return
         bandid = str(binascii.hexlify(tag.identifier),"utf-8") 
         if print_band_id == True:
             print("MagicBandId = " + bandid)
@@ -175,6 +182,7 @@ class BandScannerAndSound(cli.CommandLineInterface):
         if sequences:
             sequences = sequences if type(sequences) == list else [sequences,]
             sequence = config['sequences'][random.choice(sequences)]
+            print("Playing sound")
             self.playSound(sequence.get('spin_sound'))
 
     # Preload sound
@@ -189,6 +197,7 @@ class BandScannerAndSound(cli.CommandLineInterface):
     # play sound
     def playSound(self, fname):
         if self.loadSound(fname) == True:
+            print("Playing sound now")
             pygame.mixer.music.load(fname)
             pygame.mixer.music.set_volume(0.5)
             pygame.mixer.music.play()
@@ -214,6 +223,7 @@ class ArgumentParser(argparse.ArgumentParser):
         raise ArgparseError(self.prog, message)
 
 if __name__ == '__main__':
+    #atexit.register(exit_handler)
     magicBandScannedEvent = threading.Event()
     magicBandObject = MagicBand()
     
