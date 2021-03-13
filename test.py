@@ -72,61 +72,78 @@ def playLightSequence(magicBandScannedEvent, ringPixels, totalPixels, magicBandO
     lightSpeed = .1
     pixelRingArray = list(range(0, ringPixels-1))
     pixels = neopixel.NeoPixel(pixel_pin, totalPixels, brightness=1.0, auto_write=False, pixel_order=neopixel.RGB)
+    print("Playing light sequence")
 
-    while not True:
+    while True:
         if not magicBandScannedEvent.isSet():
             lightSpeed = .1
         else:
-            lightSpeed = lightSpeed * .75
+            lightSpeed = lightSpeed * .95
 
         if lightSpeed < 0.00001:
             if magicBandObject.success == True:
-                showAllColored(pixels, COLORS["green"])
-                time.sleep(5)
+                showAllColored(pixels, COLORS["green"], totalPixels)
+                time.sleep(2)
+                magicBandScannedEvent.clear()
+                doLightFadeOff(pixels, totalPixels)
+                pixels.brightness = 1.0
                 lightSpeed = .1
         else:
-            leadingIndex = pixelRingArray[0]
-            fadePixel(True, pixels[leadingIndex])
-            trailingIndex = pixelRingArray[4]
-            fadePixel(False, pixels[trailingIndex])
+            leadingIndex = pixelRingArray[4]
+            trailingIndex = pixelRingArray[0]
+            #print("fadePixel in", leadingIndex)
+            pixels[leadingIndex] = fadePixel(False, pixels[leadingIndex])
+            pixels[trailingIndex] = fadePixel(True, pixels[trailingIndex])
+            #pixels[trailingIndex] = 0
+            #print("fadePixel out", trailingIndex)
+            pixels.show()
             time.sleep(lightSpeed)
-            leftRotate(pixelRingArray)
+            pixelRingArray = rotateArray(pixelRingArray, len(pixelRingArray), 1)
 
+def doLightFadeOff(pixels, totalPixels):
+    brightness = 1.01
+    for x in range(100):
+        brightness = brightness - .01
+        pixels.brightness = brightness
+        pixels.show()
+        time.sleep(.0005)
+    doLightsOff(pixels, totalPixels)
 
-def showAllColored(pixels, color):
-    for i in range(self.total_pixels):
+def doLightsOff(pixels, totalPixels):
+    for i in range(totalPixels):
+        pixels[i] = 0 
+    pixels.show()
+
+def showAllColored(pixels, color, total):
+    for i in range(total):
         pixels[i] = color
 
     pixels.show()
 
+def rotateArray(arr, n, d):
+    temp = []
+    i = 0
+    while (i < d):
+        temp.append(arr[i])
+        i = i + 1
+    i = 0
+    while (d < n):
+        arr[i] = arr[d]
+        i = i + 1
+        d = d + 1
+    arr[:] = arr[: i] + temp
+    return arr
 
-def leftRotate(array, d, n):
-    for i in range(d):
-        leftRotateByOne(array, n)
-
-
-def leftRotateByOne(array, n):
-    temp = array[0]
-    for i in range(n-1):
-        array[i] = array[i + 1]
-    array[n-1] = temp
+def printArray(arr,size):
+    for i in range(size):
+        print ("%d"% arr[i],end=" ")
 
 
 def fadePixel(out, pixel):
     if out:
-        brightness = 1.01
-        for x in range(100):
-            brightness =- .01
-            pixel.brightness = brightness
-            pixel.show()
-            time.sleep(.001)
+        return (0, 0, 0)
     if not out:
-        brightness = .01
-        for x in range(100):
-            brightness =+ .01
-            pixels.brightness = brightness
-            pixels.show()
-            time.sleep(.001)
+        return COLORS["white"]
 
 class MagicBand():
     def __init__(self):
@@ -135,6 +152,7 @@ class MagicBand():
 
 class BandScannerAndSound(cli.CommandLineInterface):
     def __init__(self, magicBandObject, scannedEvent):     
+        print("Started Scanner")
         self.bandObject = magicBandObject
         self.scannedEvent = scannedEvent
         self.rdwr_commands = { }
@@ -152,11 +170,12 @@ class BandScannerAndSound(cli.CommandLineInterface):
         if print_band_id == True:
             print("MagicBandId = " + bandid)
 
-            self.scannedEvent.set()
-            sequences = config['bands'].get(bandid) or config['bands']['unknown']
-            if sequences:
-                sequences = sequences if type(sequences) == list else [sequences,]
-                self.playSound(sequence.get('spin_sound'))
+        self.scannedEvent.set()
+        sequences = config['bands'].get(bandid) or config['bands']['unknown']
+        if sequences:
+            sequences = sequences if type(sequences) == list else [sequences,]
+            sequence = config['sequences'][random.choice(sequences)]
+            self.playSound(sequence.get('spin_sound'))
 
     # Preload sound
     def loadSound(self, fname):
@@ -171,7 +190,7 @@ class BandScannerAndSound(cli.CommandLineInterface):
     def playSound(self, fname):
         if self.loadSound(fname) == True:
             pygame.mixer.music.load(fname)
-            pygame.mixer.music.set_volume(1)
+            pygame.mixer.music.set_volume(0.5)
             pygame.mixer.music.play()
 
     def on_card_startup(self, target):
@@ -200,13 +219,13 @@ if __name__ == '__main__':
     
     try:
         lightsThread = threading.Thread(name='lights',
-                target=playLightSequence, args=(magicBandScannedEvent, ring_pixels, ring_pixels+mickey_pixels, magicBandObject))
-
-        bandAndSound = BandScannerAndSound(magicBandObject, magicBandScannedEvent)
-        bandAndSound.run()
+                target=playLightSequence, args=(magicBandScannedEvent, ring_pixels, ring_pixels+mickey_pixels, magicBandObject), daemon = True)
 
         lightsThread.start()
+        bandAndSound = BandScannerAndSound(magicBandObject, magicBandScannedEvent)
+        bandAndSound.run()
         lightsThread.join()
+
     except ArgparseError as e:
         print("exception")
         print(e)
