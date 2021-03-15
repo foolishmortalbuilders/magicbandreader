@@ -53,7 +53,7 @@ COLORS = {
 }
 sequences = config['sequences']
 # GPIO Pin (Recommend GPIO18) GPIO13 is also a good choice
-pixel_pin = board.D18
+pixel_pin = board.D21
 
 if sys.version_info.major < 3:
     sys.exit("This script requires Python 3")
@@ -136,8 +136,9 @@ def rotateArray(arr, n, d):
     arr[:] = arr[: i] + temp
     return arr
 
-#def exit_handler():
-
+def exit_handler():
+    pixels = neopixel.NeoPixel(pixel_pin, totalPixels, brightness=0.9, auto_write=False, pixel_order=neopixel.RGB)
+    doLightsOff(pixels)
 
 def printArray(arr,size):
     for i in range(size):
@@ -199,7 +200,7 @@ class BandScannerAndSound(cli.CommandLineInterface):
         if self.loadSound(fname) == True:
             print("Playing sound now")
             pygame.mixer.music.load(fname)
-            pygame.mixer.music.set_volume(0.5)
+            pygame.mixer.music.set_volume(1)
             pygame.mixer.music.play()
 
     def on_card_startup(self, target):
@@ -223,7 +224,7 @@ class ArgumentParser(argparse.ArgumentParser):
         raise ArgparseError(self.prog, message)
 
 if __name__ == '__main__':
-    #atexit.register(exit_handler)
+    atexit.register(exit_handler)
     magicBandScannedEvent = threading.Event()
     magicBandObject = MagicBand()
     
