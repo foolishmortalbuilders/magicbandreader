@@ -192,6 +192,11 @@ class BandScannerAndSound(cli.CommandLineInterface):
         while not self.successEvent.isSet():
             continue
         self.playSound(sequence.get('sound'))
+        runWebHook(sequence)
+
+    def runWebHook(sequence):
+        webhooks = sequence.get('webhooks', [])                                                                                                                                             if webhooks:                                                                                                                                                                            webhooks = webhooks if type(webhooks) == list else [webhooks,]                                                                                                                  for hook in webhooks:                                                                                                                                                                  message_headers = {'Content-Type': 'application/json; charset=UTF-8'}                                                                                                               http_obj = Http()                                                                                                                                                                   response = http_obj.request(                                                                                                                                                           uri=hook,                                                                                                                                                                           method='POST',                                                                                                                                                                      headers=message_headers,                                                                                                                                                         )                                                                                                                                                                                   print(response)
+
 
     # Preload sound
     def loadSound(self, fname):
