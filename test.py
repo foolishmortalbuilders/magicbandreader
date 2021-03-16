@@ -10,9 +10,12 @@ pygame.mixer.init()
 pygame.init()
 
 def playSound(fname):
+    print("loading sound")
     pygame.mixer.music.load(fname)
-    pygame.mixer.music.set_volume(1)
+    pygame.mixer.music.set_volume(0.2)
+    print("playing sound")
     pygame.mixer.music.play()
+    print("sleeping")
     time.sleep(5)
 
 
