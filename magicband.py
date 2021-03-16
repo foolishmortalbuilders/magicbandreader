@@ -82,7 +82,10 @@ def playLightSequence(magicBandScannedEvent, successEvent, ringPixels, totalPixe
         if not magicBandScannedEvent.isSet():
             lightSpeed = .1
         else:
-            lightSpeed = lightSpeed * .95
+            if lightSpeed == .1:
+                lightSpeed = lightSpeed * .50
+            else:
+                lightSpeed = lightSpeed * .95
 
         if lightSpeed < 0.001:
             successEvent.set()
