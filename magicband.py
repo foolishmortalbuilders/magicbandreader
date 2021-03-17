@@ -27,8 +27,8 @@ import atexit
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 config = configobj.ConfigObj('settings.conf')
-print_band_id = bool(config['Settings']['print_band_id'])
-reverse_circle = bool(config['Settings']['reverse_circle'])
+print_band_id = config['Settings']['print_band_id']
+reverse_circle = config['Settings']['reverse_circle']
 ring_pixels = int(config['Settings']['ring_pixels'])
 mickey_pixels = int(config['Settings']['mickey_pixels'])
 
@@ -79,7 +79,7 @@ pixels = neopixel.NeoPixel(pixel_pin, totalPixels, brightness=0.9, auto_write=Fa
 def playLightSequence(magicBandScannedEvent, successEvent, ringPixels, totalPixels):
     lightSpeed = .1
     pixelRingArray = list(range(0, ringPixels-1))
-    if reverse_circle == True:
+    if reverse_circle == 'True':
         pixelRingArray.reverse()
     global pixels
     #print("Playing light sequence")
