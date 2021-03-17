@@ -79,7 +79,8 @@ pixels = neopixel.NeoPixel(pixel_pin, totalPixels, brightness=0.9, auto_write=Fa
 def playLightSequence(magicBandScannedEvent, successEvent, ringPixels, totalPixels):
     lightSpeed = .1
     pixelRingArray = list(range(0, ringPixels-1))
-    totalPixels = totalPixels
+    if reverse_circle == True:
+        pixelRingArray.reverse()
     global pixels
     #print("Playing light sequence")
 
