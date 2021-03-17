@@ -32,21 +32,24 @@ reverse_circle = bool(config['Settings']['reverse_circle'])
 ring_pixels = int(config['Settings']['ring_pixels'])
 mickey_pixels = int(config['Settings']['mickey_pixels'])
 
+# Format is (R, G, B)
 COLORS = {
-    "red": (0, 255, 0),
+    "red": (255, 0, 0),
     "electricred": (228, 3, 3),
     "orange": (255, 165, 0),
     "dark orange": (255, 140, 0),
     "yellow": (255, 255, 0),
     "canaryyellow": (255, 237, 0),
-    "green": (255, 0, 0),
+    "green": (0, 255, 0),
     "lasallegreen": (0, 128, 38),
+    "teal": (0, 128, 128),
     "blue": (0, 0, 255),
     "patriarch": (117, 7, 135),
     "lightblue": (153, 204, 255),
     "white": (255, 255, 255),
     "purple": (0, 153, 153),
     "gray": (128, 128, 128),
+    "pink": (255, 105, 180),
     "stitch": (0, 39, 144),
     "rainbow": (0, 0, 0),
     "pride": (0, 0, 1),
@@ -71,11 +74,13 @@ totalPixels = ring_pixels+mickey_pixels
 
 currentBandId = ""
 
+pixels = neopixel.NeoPixel(pixel_pin, totalPixels, brightness=0.9, auto_write=False, pixel_order=neopixel.GRB)
+
 def playLightSequence(magicBandScannedEvent, successEvent, ringPixels, totalPixels):
     lightSpeed = .1
     pixelRingArray = list(range(0, ringPixels-1))
     totalPixels = totalPixels
-    pixels = neopixel.NeoPixel(pixel_pin, totalPixels, brightness=0.9, auto_write=False, pixel_order=neopixel.RGB)
+    global pixels
     #print("Playing light sequence")
 
     while True:
@@ -93,21 +98,61 @@ def playLightSequence(magicBandScannedEvent, successEvent, ringPixels, totalPixe
         if lightSpeed < 0.000001:
             global currentBandId
             sequence = getSequence(currentBandId)
-            showAllColored(pixels, COLORS[sequence.get('color_mouse')])
-            time.sleep(int(sequence.get('hold_seconds')))
-            magicBandScannedEvent.clear()
-            successEvent.clear()
-            doLightFadeOff(pixels)
-            pixels.brightness = 0.9
+            runSuccess(magicBandScannedEvent, successEvent, sequence)
             lightSpeed = .1
         else:
             leadingIndex = pixelRingArray[4]
             trailingIndex = pixelRingArray[0]
-            pixels[leadingIndex] = fadePixel(False, pixels[leadingIndex])
-            pixels[trailingIndex] = fadePixel(True, pixels[trailingIndex])
-            pixels.show()
-            time.sleep(lightSpeed)
-            pixelRingArray = rotateArray(pixelRingArray)
+            color = COLORS['white']
+            if magicBandScannedEvent.isSet():
+                sequence = getSequence(currentBandId)
+                color = COLORS[sequence.get('color_ring')]
+
+            if color == COLORS['rainbow']:
+                rainbowCycle(1, 1)
+                successEvent.set()
+                runSuccess(magicBandScannedEvent, successEvent, sequence)
+            else:
+                pixels[leadingIndex] = fadePixel(False, pixels[leadingIndex], color)
+                pixels[trailingIndex] = fadePixel(True, pixels[trailingIndex], color)
+                pixels.show()
+                pixelRingArray = rotateArray(pixelRingArray)
+                time.sleep(lightSpeed)
+
+def runSuccess(bandEvent, successEvent, sequence):
+    showAllColored(pixels, COLORS[sequence.get('color_mouse')])
+    time.sleep(int(sequence.get('hold_seconds')))
+    magicBandScannedEvent.clear()
+    successEvent.clear()
+    doLightFadeOff(pixels)
+    pixels.brightness = 0.9
+
+def wheel(pos):
+    if pos < 85:
+        return (pos * 3, 255 - pos * 3, 0)
+    elif pos < 170:
+        pos -= 85
+        return (255 - pos * 3, 0, pos * 3)
+    else:
+        pos -= 170
+        return (0, pos * 3, 255 - pos * 3)
+
+def rainbowCycle(wait, iterations):
+    for j in range(256 * iterations):
+        for i in range(ring_pixels):
+            pixels[i] = wheel((int(i * 256 / ring_pixels) + j) & 255)
+        pixels.show()
+        time.sleep(wait/1000)
+
+def theaterChase(wait, iterations):
+    for j in range(256 * iterations):
+        for i in range(ring_pixels):
+            if (i + j) % 3 == 0:
+                pixels[i] = (255, 0, 0)
+            else:
+                pixels[i] = (0, 255, 0)
+        pixels.show()
+        time.sleep(wait/1000)
 
 def doLightFadeOff(pixels):
     brightness = 1.01
@@ -135,19 +180,17 @@ def rotateArray(arr):
     return arr
 
 def exit_handler():
-    pixels = neopixel.NeoPixel(pixel_pin, totalPixels, brightness=0.9, auto_write=False, pixel_order=neopixel.RGB)
     doLightsOff(pixels)
 
 def printArray(arr):
     for i in range(len(arr)):
         print ("%d"% arr[i],end=" ")
 
-
-def fadePixel(out, pixel):
+def fadePixel(out, pixel, color):
     if out:
         return (0, 0, 0)
     if not out:
-        return COLORS["white"]
+        return color
 
 def getSequence(bandid):
     sequences = config['bands'].get(bandid) or config['bands']['unknown']
