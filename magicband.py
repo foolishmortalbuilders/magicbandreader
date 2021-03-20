@@ -224,7 +224,7 @@ class BandScannerAndSound(cli.CommandLineInterface):
         if self.scannedEvent.isSet():
             return
         bandid = str(binascii.hexlify(tag.identifier),"utf-8") 
-        if print_band_id == True:
+        if print_band_id == 'True':
             print("MagicBandId = " + bandid)
 
         global currentBandId
@@ -268,7 +268,7 @@ class BandScannerAndSound(cli.CommandLineInterface):
         if self.loadSound(fname) == True:
  #           print("Playing sound now")
             pygame.mixer.music.load(fname)
-            pygame.mixer.music.set_volume(0.2)
+            pygame.mixer.music.set_volume(1)
             pygame.mixer.music.play()
   #          while pygame.mixer.get_busy() == True:
    #             time.sleep(1)
