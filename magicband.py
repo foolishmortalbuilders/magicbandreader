@@ -55,8 +55,8 @@ COLORS = {
     "pride": (0, 0, 1),
 }
 sequences = config['sequences']
-# GPIO Pin (Recommend GPIO18) GPIO13 is also a good choice
-pixel_pin = board.D21
+# GPIO Pin (Recommend GPIO18) GPIO10, 12 or 21 also work
+pixel_pin = board.D18
 
 if sys.version_info.major < 3:
     sys.exit("This script requires Python 3")
